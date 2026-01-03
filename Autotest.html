@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Paieška | Pilnas Sąrašas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --ap-color: #ff4400;
+            --ag-color: #0054a6;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: var(--card); width: 100%; max-width: 480px; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h1 { text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--text); }
+        .form-grid { display: flex; flex-direction: column; gap: 12px; }
+        label { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; display: block; color: #4b5563; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 1rem; background: #fff; box-sizing: border-box; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .search-buttons { margin-top: 25px; display: flex; flex-direction: column; gap: 12px; }
+        .btn { border: none; padding: 16px; color: white; font-weight: 700; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; transition: transform 0.1s; }
+        .btn-ap { background-color: var(--ap-color); }
+        .btn-ag { background-color: var(--ag-color); }
+        .btn:active { transform: scale(0.97); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-car-side"></i> Automobilių Filtrai</h1>
+    
+    <div class="form-grid">
+        <div>
+            <label>Markė</label>
+            <select id="brand"><option value="">Pasirinkite markę</option></select>
+        </div>
+
+        <div>
+            <label>Modelis</label>
+            <select id="model" disabled><option value="">Pirma pasirinkite markę</option></select>
+        </div>
+
+        <div class="row">
+            <div>
+                <label>Kaina Nuo</label>
+                <input type="number" id="priceFrom" placeholder="€">
+            </div>
+            <div>
+                <label>Kaina Iki</label>
+                <input type="number" id="priceTo" placeholder="€">
+            </div>
+        </div>
+
+        <div class="row">
+            <div>
+                <label>Metai Nuo</label>
+                <input type="number" id="yearFrom" placeholder="2010">
+            </div>
+            <div>
+                <label>Metai Iki</label>
+                <input type="number" id="yearTo" placeholder="2026">
+            </div>
+        </div>
+
+        <div class="row">
+            <div>
+                <label>Kuras</label>
+                <select id="fuel">
+                    <option value="">Visi</option>
+                    <option value="diesel">Dyzelis</option>
+                    <option value="petrol">Benzinas</option>
+                    <option value="petrol_gas">Benzinas/Dujos</option>
+                    <option value="petrol_electric">Hibridas</option>
+                    <option value="electric">Elektra</option>
+                </select>
+            </div>
+            <div>
+                <label>Pavarų dėžė</label>
+                <select id="gearbox">
+                    <option value="">Visos</option>
+                    <option value="automatic">Auto</option>
+                    <option value="manual">Mech</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label>Kėbulas</label>
+            <select id="body">
+                <option value="">Visi</option>
+                <option value="sedan">Sedanas</option>
+                <option value="hatchback">Hečbekas</option>
+                <option value="wagon">Universalas</option>
+                <option value="suv">Visureigis</option>
+                <option value="coupe">Kupė</option>
+                <option value="mpv">Vienatūris</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-buttons">
+        <button class="btn btn-ap" onclick="doSearch('autoplius')">
+            <i class="fa-solid fa-plus"></i> AUTOPLIUS.LT
+        </button>
+        <button class="btn btn-ag" onclick="doSearch('autogidas')">
+            <i class="fa-solid fa-circle-info"></i> AUTOGIDAS.LT
+        </button>
+    </div>
+</div>
+
+<script>
+    const carData = {
+        "alfa-romeo": ["147", "156", "159", "Giulia", "Giulietta", "Stelvio"],
+        "audi": ["80", "100", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q5", "Q7", "Q8", "TT", "e-tron"],
+        "bmw": ["1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "6 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "i3", "i4", "iX"],
+        "chevrolet": ["Camaro", "Captiva", "Corvette", "Cruze", "Volt"],
+        "chrysler": ["300C", "Grand Voyager", "Pacifica", "Town & Country", "Voyager"],
+        "citroen": ["Berlingo", "C1", "C3", "C4", "C5", "Jumper", "Jumpy"],
+        "dacia": ["Dokker", "Duster", "Lodgy", "Logan", "Sandero"],
+        "dodge": ["Challenger", "Charger", "Durango", "Grand Caravan", "Ram"],
+        "fiat": ["500", "500L", "500X", "Ducato", "Panda", "Tipo"],
+        "ford": ["C-Max", "EcoSport", "Edge", "Escape", "Explorer", "F-150", "Fiesta", "Focus", "Fusion", "Galaxy", "Kuga", "Mondeo", "Mustang", "S-Max", "Transit"],
+        "honda": ["Accord", "Civic", "CR-V", "HR-V", "Jazz"],
+        "hyundai": ["i10", "i20", "i30", "i40", "Ioniq", "Kona", "Santa Fe", "Tucson"],
+        "infiniti": ["FX30", "FX35", "QX50", "QX70"],
+        "jaguar": ["F-Pace", "I-Pace", "XE", "XF", "XJ"],
+        "jeep": ["Cherokee", "Compass", "Grand Cherokee", "Renegade", "Wrangler"],
+        "kia": ["Ceed", "Niro", "Optima", "Rio", "Sorento", "Soul", "Sportage", "Stinger"],
+        "land-rover": ["Defender", "Discovery", "Freelander", "Range Rover", "Range Rover Evoque", "Range Rover Sport", "Range Rover Velar"],
+        "lexus": ["CT", "ES", "GS", "IS", "LS", "NX", "RX", "UX"],
+        "mazda": ["2", "3", "5", "6", "CX-3", "CX-30", "CX-5", "CX-7", "CX-9", "MX-5"],
+        "mercedes-benz": ["A-Class", "B-Class", "C-Class", "CL", "CLA", "CLS", "E-Class", "G-Class", "GL", "GLA", "GLC", "GLE", "GLS", "ML-Class", "S-Class", "Sprinter", "V-Class", "Vito"],
+        "mini": ["Clubman", "Cooper", "Countryman"],
+        "mitsubishi": ["ASX", "L200", "Lancer", "Outlander", "Pajero"],
+        "nissan": ["Juke", "Leaf", "Micra", "Navara", "Note", "Pathfinder", "Qashqai", "X-Trail"],
+        "opel": ["Antara", "Astra", "Combo", "Corsa", "Insignia", "Meriva", "Mokka", "Movano", "Vectra", "Vivaro", "Zafira"],
+        "peugeot": ["2008", "207", "208", "3008", "307", "308", "5008", "508", "Boxer", "Expert", "Partner"],
+        "porsche": ["911", "Boxster", "Cayenne", "Cayman", "Macan", "Panamera", "Taycan"],
+        "renault": ["Captur", "Clio", "Espace", "Grand Scenic", "Kadjar", "Kangoo", "Laguna", "Master", "Megane", "Scenic", "Talisman", "Trafic", "Zoe"],
+        "seat": ["Alhambra", "Altea", "Arona", "Ateca", "Ibiza", "Leon", "Tarraco"],
+        "skoda": ["Fabia", "Kamiq", "Karoq", "Kodiaq", "Octavia", "Rapid", "Superb", "Yeti"],
+        "subaru": ["Forester", "Impreza", "Legacy", "Outback", "XV"],
+        "suzuki": ["Grand Vitara", "Jimny", "Swift", "SX4", "Vitara"],
+        "tesla": ["Model 3", "Model S", "Model X", "Model Y"],
+        "toyota": ["Auris", "Avensis", "Aygo", "C-HR", "Camry", "Corolla", "Corolla Verso", "Highlander", "Land Cruiser", "Prius", "RAV4", "Verso", "Yaris"],
+        "volkswagen": ["Amarok", "Arteon", "Caddy", "Crafter", "Golf", "ID.3", "ID.4", "Jetta", "Multivan", "Passat", "Polo", "Scirocco", "Sharan", "T-Cross", "T-Roc", "Tiguan", "Touareg", "Touran", "Transporter"],
+        "volvo": ["C30", "S40", "S60", "S80", "S90", "V40", "V50", "V60", "V70", "V90", "XC40", "XC60", "XC70", "XC90"]
+    };
+
+    const maps = {
+        fuel: {
+            diesel: { ag: 'Dyzelinas', ap: '32' },
+            petrol: { ag: 'Benzinas', ap: '30' },
+            petrol_gas: { ag: 'Benzinas/Dujos', ap: '33' },
+            petrol_electric: { ag: 'Benzinas/Elektra', ap: '34' },
+            electric: { ag: 'Elektra', ap: '35' }
+        },
+        gearbox: { automatic: { ag: 'Automatinė', ap: '2' }, manual: { ag: 'Mechaninė', ap: '1' } },
+        body: { sedan: { ag: 'Sedanas', ap: '1' }, hatchback: { ag: 'Hečbekas', ap: '2' }, wagon: { ag: 'Universalas', ap: '3' }, suv: { ag: 'Visureigis', ap: '4' }, coupe: { ag: 'Kupė', ap: '5' }, mpv: { ag: 'Vienatūris', ap: '8' } }
+    };
+
+    const brandSelect = document.getElementById('brand');
+    const modelSelect = document.getElementById('model');
+
+    Object.keys(carData).sort().forEach(brand => {
+        let name = brand.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        if(brand === 'bmw' || brand === 'vw') name = name.toUpperCase();
+        brandSelect.add(new Option(name, brand));
+    });
+
+    brandSelect.onchange = function() {
+        modelSelect.innerHTML = '<option value="">Visi modeliai</option>';
+        if (this.value) {
+            modelSelect.disabled = false;
+            carData[this.value].sort().forEach(m => modelSelect.add(new Option(m, m)));
+        } else {
+            modelSelect.disabled = true;
+        }
+    };
+
+    function doSearch(site) {
+        const brand = brandSelect.value;
+        if (!brand) { alert("Pasirinkite markę"); return; }
+        
+        const model = modelSelect.value;
+        const pF = document.getElementById('priceFrom').value;
+        const pT = document.getElementById('priceTo').value;
+        const yF = document.getElementById('yearFrom').value;
+        const yT = document.getElementById('yearTo').value;
+        const f = document.getElementById('fuel').value;
+        const g = document.getElementById('gearbox').value;
+        const b = document.getElementById('body').value;
+
+        let mStr = model.toLowerCase().replace(/\s+/g, '-');
+        if (brand === 'bmw' && model.includes('Series')) {
+            let n = model.split(' ')[0];
+            mStr = (site === 'autogidas') ? `serija-${n}` : `${n}-serija`;
+        }
+        if (brand === 'mercedes-benz' && model.includes('Class')) {
+            mStr = model.split('-')[0].toLowerCase() + "-klase";
+        }
+
+        if (site === 'autogidas') {
+            let url = `https://autogidas.lt/skelbimai/automobiliai/${brand}/${mStr}/?`;
+            if (pF) url += `f_215=${pF}&`;
+            if (pT) url += `f_216=${pT}&`;
+            if (yF) url += `f_41=${yF}&`;
+            if (yT) url += `f_42=${yT}&`;
+            if (f) url += `f_2=${encodeURIComponent(maps.fuel[f].ag)}&`;
+            if (g) url += `f_10=${encodeURIComponent(maps.gearbox[g].ag)}&`;
+            if (b) url += `f_1=${encodeURIComponent(maps.body[b].ag)}&`;
+            window.open(url, '_blank');
+        } else {
+            let url = `https://autoplius.lt/skelbimai/naudoti-automobiliai/${brand}/${mStr}?`;
+            if (pF) url += `sell_price_from=${pF}&`;
+            if (pT) url += `sell_price_to=${pT}&`;
+            if (yF) url += `make_date_from=${yF}&`;
+            if (yT) url += `make_date_to=${yT}&`;
+            if (f) url += `fuel_id=${maps.fuel[f].ap}&`;
+            if (g) url += `gearbox_id=${maps.gearbox[g].ap}&`;
+            if (b) url += `body_type_id=${maps.body[b].ap}&`;
+            window.open(url, '_blank');
+        }
+    }
+</script>
+</body>
+</html>

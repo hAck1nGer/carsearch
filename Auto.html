@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automobilių Paieška</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --border: #d1d5db;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        h1 i { color: var(--primary); }
+
+        .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #fff;
+            box-sizing: border-box;
+        }
+
+        /* 2 stulpeliai kainai ir metams */
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: var(--primary-dark); }
+        
+        .note {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-car"></i> Rask Automobilį</h1>
+    
+    <div class="form-grid">
+        <div>
+            <label>Markė</label>
+            <select id="brand">
+                <option value="">Pasirinkite Markę</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Modelis</label>
+            <select id="model" disabled>
+                <option value="">Pirma pasirinkite markę</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Kaina (€)</label>
+            <div class="row-2">
+                <input type="number" id="priceFrom" placeholder="Nuo">
+                <input type="number" id="priceTo" placeholder="Iki">
+            </div>
+        </div>
+
+        <div>
+            <label>Metai</label>
+            <div class="row-2">
+                <input type="number" id="yearFrom" placeholder="Nuo">
+                <input type="number" id="yearTo" placeholder="Iki">
+            </div>
+        </div>
+
+        <div>
+            <label>Kuras</label>
+            <select id="fuel">
+                <option value="">Visi</option>
+                <option value="diesel">Dyzelinas</option>
+                <option value="petrol">Benzinas</option>
+                <option value="petrol_gas">Benzinas/Dujos</option>
+                <option value="petrol_electric">Hibridas</option>
+                <option value="electric">Elektra</option>
+            </select>
+        </div>
+        
+        <div>
+            <label>Pavarų dėžė</label>
+            <select id="gearbox">
+                <option value="">Visos</option>
+                <option value="automatic">Automatinė</option>
+                <option value="manual">Mechaninė</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Kėbulas</label>
+            <select id="body">
+                <option value="">Visi</option>
+                <option value="sedan">Sedanas</option>
+                <option value="hatchback">Hečbekas</option>
+                <option value="wagon">Universalas</option>
+                <option value="suv">Visureigis (SUV)</option>
+            </select>
+        </div>
+    </div>
+
+    <button onclick="searchCars()">Ieškoti (Autogidas + Autoplius)</button>
+    <p class="note">Atsidarys du nauji langai.</p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. DUOMENŲ BAZĖ ---
+        const carData = {
+            "audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q3", "Q5", "Q7", "Q8", "TT"],
+            "bmw": ["1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "6 Series", "7 Series", "X1", "X3", "X4", "X5", "X6", "X7", "i3", "iX"],
+            "volkswagen": ["Golf", "Passat", "Tiguan", "Touareg", "Touran", "Polo", "Arteon", "Jetta", "Sharan", "ID.3", "ID.4"],
+            "toyota": ["Avensis", "Auris", "Corolla", "RAV4", "Yaris", "Prius", "Land Cruiser", "C-HR", "Camry", "Highlander"],
+            "volvo": ["S60", "S90", "V60", "V90", "XC40", "XC60", "XC90"],
+            "mercedes-benz": ["A-Class", "C-Class", "E-Class", "S-Class", "CLA", "CLS", "GLA", "GLC", "GLE"],
+            "skoda": ["Octavia", "Superb", "Kodiaq", "Karoq", "Fabia"],
+            "opel": ["Astra", "Insignia", "Zafira", "Corsa", "Mokka"],
+            "ford": ["Focus", "Mondeo", "Fiesta", "Kuga", "S-Max", "Mustang"],
+            "nissan": ["Qashqai", "Juke", "X-Trail", "Leaf"],
+            "peugeot": ["308", "3008", "508", "5008", "208"],
+            "renault": ["Megane", "Clio", "Scenic", "Talisman", "Captur"],
+            "lexus": ["IS", "GS", "RX", "NX", "ES"],
+            "subaru": ["Legacy", "Outback", "Forester"],
+            "honda": ["Civic", "CR-V", "Accord", "HR-V"],
+            "mazda": ["3", "6", "CX-3", "CX-5", "CX-30"],
+            "kia": ["Sportage", "Ceed", "Sorento"]
+        };
+
+        const maps = {
+            fuel: {
+                diesel: { ag: 'Dyzelinas', ap: '32' },
+                petrol: { ag: 'Benzinas', ap: '30' },
+                petrol_gas: { ag: 'Benzinas/Dujos', ap: '33' },
+                petrol_electric: { ag: 'Benzinas/Elektra', ap: '34' },
+                electric: { ag: 'Elektra', ap: '35' }
+            },
+            gearbox: {
+                automatic: { ag: 'Automatinė', ap: '2' },
+                manual: { ag: 'Mechaninė', ap: '1' }
+            },
+            body: {
+                sedan: { ag: 'Sedanas', ap: '1' },
+                hatchback: { ag: 'Hečbekas', ap: '2' },
+                wagon: { ag: 'Universalas', ap: '3' },
+                suv: { ag: 'Visureigis', ap: '4' }
+            }
+        };
+
+        // --- 2. UŽPILDYTI MARKIŲ SĄRAŠĄ ---
+        const brandSelect = document.getElementById('brand');
+        const modelSelect = document.getElementById('model');
+
+        // Išvalome ir pridedame
+        Object.keys(carData).sort().forEach(brand => {
+            let option = document.createElement('option');
+            option.value = brand;
+            // Padarome pirmą raidę didžiąja (audi -> Audi)
+            option.text = brand.charAt(0).toUpperCase() + brand.slice(1);
+            if(brand === 'bmw') option.text = 'BMW';
+            if(brand === 'volkswagen') option.text = 'Volkswagen';
+            if(brand === 'mercedes-benz') option.text = 'Mercedes-Benz';
+            brandSelect.add(option);
+        });
+
+        // --- 3. LOGIKA: Keičiant markę, keičiasi modeliai ---
+        brandSelect.addEventListener('change', function() {
+            modelSelect.innerHTML = '<option value="">Visi modeliai</option>';
+            const selectedBrand = this.value;
+            
+            if (selectedBrand && carData[selectedBrand]) {
+                modelSelect.disabled = false;
+                carData[selectedBrand].forEach(model => {
+                    let option = document.createElement('option');
+                    option.value = model;
+                    option.text = model;
+                    modelSelect.add(option);
+                });
+            } else {
+                modelSelect.disabled = true;
+                modelSelect.innerHTML = '<option value="">Pirma pasirinkite markę</option>';
+            }
+        });
+
+        // --- 4. MODELIŲ FORMATAVIMAS URL ---
+        window.formatModel = function(brand, model, site) {
+            if (!model) return "";
+            let m = model.toLowerCase().replace(/\s+/g, '-');
+            
+            if (brand === 'bmw' && model.includes('Series')) {
+                const num = model.split(' ')[0];
+                return site === 'autogidas' ? `serija-${num}` : `${num}-serija`;
+            }
+            if (brand === 'mercedes-benz' && model.includes('Class')) {
+                const letter = model.split('-')[0].toLowerCase();
+                return `${letter}-klase`;
+            }
+            return m;
+        };
+
+        // --- 5. PAIEŠKOS FUNKCIJA ---
+        window.searchCars = function() {
+            const brand = document.getElementById('brand').value;
+            const model = document.getElementById('model').value;
+            const priceFrom = document.getElementById('priceFrom').value;
+            const priceTo = document.getElementById('priceTo').value;
+            const yearFrom = document.getElementById('yearFrom').value;
+            const yearTo = document.getElementById('yearTo').value;
+            const fuel = document.getElementById('fuel').value;
+            const gearbox = document.getElementById('gearbox').value;
+            const body = document.getElementById('body').value;
+
+            if (!brand) {
+                document.getElementById('brand').style.borderColor = 'red';
+                return;
+            } else {
+                document.getElementById('brand').style.borderColor = '#d1d5db';
+            }
+
+            // Autogidas
+            let agUrl = `https://autogidas.lt/skelbimai/automobiliai/${brand}/`;
+            if (model) agUrl += `${formatModel(brand, model, 'autogidas')}/`;
+            let agParams = [];
+            if (priceFrom) agParams.push(`f_215=${priceFrom}`);
+            if (priceTo) agParams.push(`f_216=${priceTo}`);
+            if (yearFrom) agParams.push(`f_41=${yearFrom}`);
+            if (yearTo) agParams.push(`f_42=${yearTo}`);
+            if (fuel) agParams.push(`f_2=${encodeURIComponent(maps.fuel[fuel].ag)}`);
+            if (gearbox) agParams.push(`f_10=${encodeURIComponent(maps.gearbox[gearbox].ag)}`);
+            if (body) agParams.push(`f_1=${encodeURIComponent(maps.body[body].ag)}`);
+            if (agParams.length > 0) agUrl += '?' + agParams.join('&');
+
+            // Autoplius
+            let apUrl = `https://autoplius.lt/skelbimai/naudoti-automobiliai/${brand}`;
+            if (model) apUrl += `/${formatModel(brand, model, 'autoplius')}`;
+            let apParams = [];
+            if (priceFrom) apParams.push(`sell_price_from=${priceFrom}`);
+            if (priceTo) apParams.push(`sell_price_to=${priceTo}`);
+            if (yearFrom) apParams.push(`make_date_from=${yearFrom}`);
+            if (yearTo) apParams.push(`make_date_to=${yearTo}`);
+            if (fuel) apParams.push(`fuel_id=${maps.fuel[fuel].ap}`);
+            if (gearbox) apParams.push(`gearbox_id=${maps.gearbox[gearbox].ap}`);
+            if (body) apParams.push(`body_type_id=${maps.body[body].ap}`);
+            if (apParams.length > 0) apUrl += '?' + apParams.join('&');
+
+            window.open(agUrl, '_blank');
+            window.open(apUrl, '_blank');
+        };
+    });
+</script>
+
+</body>
+</html>
